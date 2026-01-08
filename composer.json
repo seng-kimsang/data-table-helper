@@ -1,6 +1,6 @@
 {
     "name": "data-table/kimsang",
-    "description": "Example Composer package",
+    "description": "Reusable Laravel DataTable helper",
     "type": "library",
     "license": "MIT",
     "require": {

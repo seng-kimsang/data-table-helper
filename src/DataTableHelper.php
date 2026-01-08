@@ -14,9 +14,27 @@ class DataTableHelper
         array $searchableCols = [],
         array $searchRemoval = []
     ) {
+
+
         $perPage = $request->per_page ?: 25;
         $data = $query;
         $searchQuery = null;
+
+        // 🔒 NORMALIZE MODEL INPUT
+        if (is_string($model) && is_subclass_of($model, Model::class)) {
+            // App\Models\User::class
+            $data = $model::query();
+        } elseif ($model instanceof Builder) {
+            // User::query()
+            $data = $model;
+        } elseif ($model instanceof Model) {
+            // new User()
+            $data = $model->newQuery();
+        } else {
+            throw new InvalidArgumentException(
+                'Second argument must be Eloquent Model class, instance, or Builder'
+            );
+        }
 
         if (!empty($request->search_query)) {
             $searchQuery = strip_tags(trim($request->search_query));

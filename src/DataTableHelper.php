@@ -10,14 +10,14 @@ class DataTableHelper
 {
     public static function getData(
         Request $request,
-        $query,
+        $model,
         array $searchableCols = [],
         array $searchRemoval = []
     ) {
 
 
         $perPage = $request->per_page ?: 25;
-        $data = $query;
+        $data = null;
         $searchQuery = null;
 
         // 🔒 NORMALIZE MODEL INPUT

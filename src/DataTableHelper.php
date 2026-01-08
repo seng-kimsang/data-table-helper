@@ -14,7 +14,8 @@ class DataTableHelper
         Request $request,
         $model,
         array $searchableCols = [],
-        array $searchRemoval = []
+        $custom = true,
+        array $searchRemoval = [],
     ) {
 
 
@@ -107,6 +108,10 @@ class DataTableHelper
             }
         }
 
+        if ($custom) {
+            return self::customPage($data, $request);
+        }
+
         return $data->paginate($perPage);
     }
 
@@ -152,5 +157,34 @@ class DataTableHelper
         $from = Carbon::createFromFormat('Y-m-d', $value);
         $to = $from->copy()->addDay();
         return "$column < date '{$from->toDateString()}' OR $column >= date '{$to->toDateString()}'";
+    }
+
+    private static function customPage($model, $request = null)
+    {
+        $currentPage = optional($request)->pageNumber ?? 1;
+        $perPage = optional($request)->pageSize ?? 25;
+        $offset = ($currentPage - 1) * $perPage;
+        $total = $model->count();
+
+        $data = $model
+            ->offset($offset)
+            ->limit($perPage)
+            ->get();
+
+        $totalPages = ceil($total / $perPage);
+        $prevPage = $currentPage > 1 ? $currentPage - 1 : null;
+        $nextPage = $currentPage < $totalPages ? $currentPage + 1 : null;
+
+        return response()->json([
+            'data' => $data,
+            'pagination' => [
+                'total' => (int) $total,
+                'currentPage' => (int) $currentPage,
+                'perPage' => (int) $perPage,
+                'totalPages' => (int) $totalPages,
+                'prevPage' => $prevPage,
+                'nextPage' => $nextPage,
+            ]
+        ]);
     }
 }

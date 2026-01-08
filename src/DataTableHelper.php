@@ -2,7 +2,7 @@
 
 namespace DataTableHelper\Kimsang;
 
-class Package
+class DataTableHelper
 {
     public static function hello(): string
     {

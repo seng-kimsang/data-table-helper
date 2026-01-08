@@ -10,7 +10,7 @@ class DataTableHelper
 {
     public static function getData(
         Request $request,
-        Builder $query,
+        $query,
         array $searchableCols = [],
         array $searchRemoval = []
     ) {

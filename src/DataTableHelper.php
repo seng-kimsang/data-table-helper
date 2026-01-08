@@ -2,9 +2,11 @@
 
 namespace DataTableHelper\Kimsang;
 
-use Carbon\Carbon;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
+use InvalidArgumentException;
 
 class DataTableHelper
 {

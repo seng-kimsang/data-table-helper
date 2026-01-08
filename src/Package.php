@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\Package;
+namespace DataTableHelper\Kimsang;
 
 class Package
 {

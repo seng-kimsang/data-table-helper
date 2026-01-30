@@ -191,7 +191,7 @@ class DataTableHelper
         ]);
     }
 
-    function mergeResponseData(mixed $data, array $fields, string $path)
+    public static function  mergeResponseData(mixed $data, array $fields, string $path)
     {
         if ($data instanceof \Illuminate\Http\JsonResponse) {
             $pageArray = $data->getData(true);

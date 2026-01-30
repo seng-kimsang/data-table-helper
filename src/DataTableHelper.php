@@ -223,7 +223,7 @@ class DataTableHelper
         $userInfo = [];
         if (count($userIds)) {
             $cacheKey = 'user_info_' . md5(json_encode($userIds));
-            $userInfo = Cache::remember($cacheKey, 300, function () use ($userIds) {
+            $userInfo = Cache::remember($cacheKey, 300, function () use ($userIds, $path) {
                 $response = Http::withHeaders(userHeaders())
                     ->get($path, ['ids' => $userIds]);
                 if (!$response->failed() && !empty($response['data'])) {

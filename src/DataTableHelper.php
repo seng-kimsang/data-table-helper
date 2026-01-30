@@ -191,8 +191,13 @@ class DataTableHelper
         ]);
     }
 
-    public static function  mergeResponseData(mixed $data, array $fields, string $path, $objectKey = "sub_query")
-    {
+    public static function  mergeResponseData(
+        mixed $data,
+        string $field,
+        string $path,
+        string $returnKey = 'sub_query',
+        string $keyBy = "user_id"
+    ) {
         if ($data instanceof \Illuminate\Http\JsonResponse) {
             $pageArray = $data->getData(true);
         } elseif ($data instanceof \Illuminate\Pagination\AbstractPaginator) {
@@ -203,7 +208,7 @@ class DataTableHelper
             return $data;
         }
 
-        if (empty($pageArray) || empty($fields) || empty($pageArray['data'])) {
+        if (empty($pageArray) || empty($field) || empty($pageArray['data'])) {
             return $pageArray;
         }
 
@@ -212,40 +217,42 @@ class DataTableHelper
         // 🔧 faster pure-PHP unique collection
         $userIds = [];
         foreach ($getData as $row) {
-            foreach ($fields as $f) {
-                if (!empty($row[$f])) {
-                    $userIds[$row[$f]] = true;
-                }
-            }
+            $userIds[$row[$field]] = true;
         }
+
         $userIds = array_keys($userIds);
 
-        $userInfo = [];
-        if (count($userIds)) {
-            $cacheKey = 'user_info_' . md5(json_encode($userIds));
-            $userInfo = Cache::remember($cacheKey, 300, function () use ($userIds, $path, $objectKey) {
-                $response = Http::withHeaders(userHeaders())
-                    ->get($path, ['ids' => $userIds]);
-                if (!$response->failed() && !empty($response['data'])) {
-                    return collect($response)
-                        ->keyBy('id')
-                        ->map(fn($u) => [
-                            $objectKey => $u,
-                        ])
-                        ->toArray();
-                }
-                return [];
-            });
-        }
+        $remoteMap = [];
+        if (!empty($userIds)) {
+            $response = Http::withHeaders(userHeaders())
+                ->get($path, ['ids' => $userIds]);
 
-        foreach ($getData as &$user) {
-            foreach ($fields as $f) {
-                $id = $user[$f] ?? null;
-                $user[$f] = $id && isset($userInfo[$id]) ? $userInfo[$id] : null;
+            if ($response->failed()) {
+                return $pageArray;
             }
-        }
-        $pageArray['data'] = $getData;
 
+            $remoteData = $response->json();
+
+            if (!is_array($remoteData)) {
+                return $pageArray;
+            }
+
+            $remoteMap = collect($remoteData)
+                ->filter(fn($item) => is_array($item) && isset($item[$keyBy]))
+                ->keyBy($keyBy)
+                ->toArray();
+        }
+
+        foreach ($getData as &$row) {
+            $tpId = $row[$field] ?? null;
+
+            $row[$returnKey] = ($tpId && isset($remoteMap[$tpId]))
+                ? $remoteMap[$tpId]
+                : null;
+        }
+        unset($row);
+
+        $pageArray['data'] = $getData;
         return $pageArray;
     }
 }

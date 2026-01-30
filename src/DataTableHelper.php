@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+
 use InvalidArgumentException;
 
 class DataTableHelper
@@ -186,5 +189,65 @@ class DataTableHelper
                 'nextPage' => $nextPage,
             ]
         ]);
+    }
+
+    function mergeResponseData(mixed $data, array $fields, string $path)
+    {
+        if ($data instanceof \Illuminate\Http\JsonResponse) {
+            $pageArray = $data->getData(true);
+        } elseif ($data instanceof \Illuminate\Pagination\AbstractPaginator) {
+            $pageArray = $data->toArray();
+        } elseif (is_array($data)) {
+            $pageArray = $data;
+        } else {
+            return $data;
+        }
+
+        if (empty($pageArray) || empty($fields) || empty($pageArray['data'])) {
+            return $pageArray;
+        }
+
+        $getData = $pageArray['data'];
+
+        // 🔧 faster pure-PHP unique collection
+        $userIds = [];
+        foreach ($getData as $row) {
+            foreach ($fields as $f) {
+                if (!empty($row[$f])) {
+                    $userIds[$row[$f]] = true;
+                }
+            }
+        }
+        $userIds = array_keys($userIds);
+
+        $userInfo = [];
+        if (count($userIds)) {
+            $cacheKey = 'user_info_' . md5(json_encode($userIds));
+            $userInfo = Cache::remember($cacheKey, 300, function () use ($userIds) {
+                $response = Http::withHeaders(userHeaders())
+                    ->get($path, ['ids' => $userIds]);
+                if (!$response->failed() && !empty($response['data'])) {
+                    return collect($response['data'])
+                        ->keyBy('id')
+                        ->map(fn($u) => [
+                            'first_name' => $u['first_name'],
+                            'last_name' => $u['last_name'],
+                            'phone_number' => $u['phone_number'],
+                        ])
+                        ->toArray();
+                }
+                return [];
+            });
+        }
+
+        foreach ($getData as &$user) {
+            foreach ($fields as $f) {
+                $id = $user[$f] ?? null;
+                $user[$f] = $id && isset($userInfo[$id]) ? $userInfo[$id] : null;
+            }
+        }
+        $pageArray['data'] = $getData;
+
+        return $pageArray;
     }
 }

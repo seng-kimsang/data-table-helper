@@ -191,7 +191,7 @@ class DataTableHelper
         ]);
     }
 
-    public static function  mergeResponseData(mixed $data, array $fields, string $path)
+    public static function  mergeResponseData(mixed $data, array $fields, string $path, $objectKey = "sub_query")
     {
         if ($data instanceof \Illuminate\Http\JsonResponse) {
             $pageArray = $data->getData(true);
@@ -223,16 +223,14 @@ class DataTableHelper
         $userInfo = [];
         if (count($userIds)) {
             $cacheKey = 'user_info_' . md5(json_encode($userIds));
-            $userInfo = Cache::remember($cacheKey, 300, function () use ($userIds, $path) {
+            $userInfo = Cache::remember($cacheKey, 300, function () use ($userIds, $path, $objectKey) {
                 $response = Http::withHeaders(userHeaders())
                     ->get($path, ['ids' => $userIds]);
                 if (!$response->failed() && !empty($response['data'])) {
-                    return collect($response['data'])
+                    return collect($response)
                         ->keyBy('id')
                         ->map(fn($u) => [
-                            'first_name' => $u['first_name'],
-                            'last_name' => $u['last_name'],
-                            'phone_number' => $u['phone_number'],
+                            $objectKey => $u,
                         ])
                         ->toArray();
                 }

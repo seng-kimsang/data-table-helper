@@ -125,14 +125,32 @@ class ColumnHelper
     }
 
     /* ================= PAGINATION ================= */
-
-    private static function customPage($query, Request $request)
+    private static function customPage($model, $request = null)
     {
-        return $query->paginate(
-            $request->per_page ?? 25,
-            ['*'],
-            'page',
-            $request->page ?? 1
-        );
+        $currentPage = optional($request)->pageNumber ?? 1;
+        $perPage = optional($request)->pageSize ?? 25;
+        $offset = ($currentPage - 1) * $perPage;
+        $total = $model->count();
+
+        $data = $model
+            ->offset($offset)
+            ->limit($perPage)
+            ->get();
+
+        $totalPages = ceil($total / $perPage);
+        $prevPage = $currentPage > 1 ? $currentPage - 1 : null;
+        $nextPage = $currentPage < $totalPages ? $currentPage + 1 : null;
+
+        return response()->json([
+            'data' => $data,
+            'pagination' => [
+                'total' => (int) $total,
+                'currentPage' => (int) $currentPage,
+                'perPage' => (int) $perPage,
+                'totalPages' => (int) $totalPages,
+                'prevPage' => $prevPage,
+                'nextPage' => $nextPage,
+            ]
+        ]);
     }
 }

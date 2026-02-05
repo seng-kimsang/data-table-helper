@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 
-class ColumnHelper
+class DataHelper
 {
     public static function dataHelper(
         Request $request,

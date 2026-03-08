@@ -57,14 +57,21 @@ class DataHelper
         }
 
         /* ================= SORT ================= */
-        if ($request->field && $request->direction) {
-            $direction = strtolower($request->direction);
-            if (in_array($direction, ['asc', 'desc'], true)) {
-                $data->orderBy($request->field, $direction);
-            }
-        } else {
-            $data->orderBy('id', 'desc');
-        }
+        $sort = $request->input('sort');
+        $field = $sort['field'] ?? 'id';
+        $direction = strtoupper($sort['direction'] ?? 'DESC');
+
+        $direction = in_array($direction, ['ASC', 'DESC']) ? $direction : 'DESC';
+
+        $data->orderBy($field, $direction);
+        // if ($request->field && $request->direction) {
+        //     $direction = strtolower($request->direction);
+        //     if (in_array($direction, ['asc', 'desc'], true)) {
+        //         $data->orderBy($request->field, $direction);
+        //     }
+        // } else {
+        //     $data->orderBy('id', 'desc');
+        // }
 
         return $custom
             ? self::customPage($data, $request)

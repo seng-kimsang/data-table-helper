@@ -77,6 +77,7 @@ class DataTableHelper
         $direction = in_array($direction, ['ASC', 'DESC']) ? $direction : 'DESC';
 
         $data->orderBy($field, $direction);
+
         // if ($request->field && $request->direction) {
         //     $direction = strtolower($request->direction);
         //     if (in_array($direction, ['asc', 'desc'])) {

@@ -17,8 +17,10 @@ class DataHelper
         array $searchRemoval = []
     ) {
         $perPage = $request->per_page ?: 25;
-        $searchQuery = $request->filled('search_query')
-            ? strip_tags(trim($request->search_query))
+        $searchQuery = $request->input('search_query') ?? $request->input('search');
+
+        $searchQuery = $searchQuery
+            ? strip_tags(trim($searchQuery))
             : null;
 
         // Normalize model input
@@ -43,9 +45,9 @@ class DataHelper
 
             $data->where(function ($query) use ($searchableCols, $searchQuery) {
                 foreach ($searchableCols as $index => $config) {
-                    $column   = $config['col'];
+                    $column = $config['col'];
                     $operator = strtolower($config['operator'] ?? 'cn');
-                    $method   = $index === 0 ? 'where' : 'orWhere';
+                    $method = $index === 0 ? 'where' : 'orWhere';
 
                     $query->$method(function ($q) use ($column, $operator, $searchQuery) {
                         foreach ($searchQuery as $sq) {
